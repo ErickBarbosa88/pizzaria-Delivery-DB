@@ -1,4 +1,13 @@
-/*const pool = require('../database/dbConfig');
+/*const express = require('express');
+const bodyParser = require('body-parser');
+const pool = require('../src/database/dbConfig')
+const pedidoRoutes = require('./routes/pedidoRoutes');
+
+const app = express();
+const port = 3000;
+app.use(bodyParser.json());
+app.use(pedidoRoutes);
+
 
 // Obter todos os Pedidos
 const getAllPedidos = (req, res) => {
@@ -125,12 +134,86 @@ const deletePedido = (req, res) => {
     });
   });
 };
+*
+
+
+app.listen(port, () => {
+  console.log(`Servidor ouvindo na porta ${port}`);
+});
 
 module.exports = {
   getAllPedidos,
-  //getPedidoById,
   createPedido
+  //getPedidoById,
   //updatePedido,
   //deletePedido
 };
+
+const router = express.Router();
+
+
+router.get('/pedido', getAllPedidos);
+router.post('/pedido', createPedido);
+
+module.exports = router;
 */
+
+const express = require('express');
+const bodyParser = require('body-parser');
+const pool = require('../src/database/dbConfig');
+
+const app = express();
+const port = 3000;
+
+app.use(bodyParser.json());
+
+// Obter todos os Pedidos
+const getAllPedidos = (req, res) => {
+  pool.connect((err, client, done) => {
+    if (err) {
+      console.error('Erro ao obter conexão do pool', err);
+      return res.status(500).json({ error: 'Erro ao obter Pedidos' });
+    }
+
+    client.query('SELECT * FROM users;', (err, result) => {
+      done(); // Libera a conexão
+
+      if (err) {
+        console.error('Erro ao executar a consulta', err);
+        return res.status(500).json({ error: 'Erro ao obter Pedidos' });
+      }
+
+      res.status(200).json(result.rows);
+    });
+  });
+};
+
+// Criar um novo Pedido
+const createPedido = (req, res) => {
+  const { user_id, user_name, user_contato, user_endereco } = req.body;
+
+  pool.connect((err, client, done) => {
+    if (err) {
+      console.error('Erro ao obter conexão do pool', err);
+      return res.status(500).json({ error: 'Erro ao criar Pedido' });
+    }
+
+    client.query('INSERT INTO users (user_id, user_name, user_contato, user_endereco) VALUES ($1, $2, $3, $4) RETURNING *', [user_id, user_name, user_contato, user_endereco], (err, result) => {
+      done(); // Libera a conexão
+
+      if (err) {
+        console.error('Erro ao executar a consulta', err);
+        return res.status(500).json({ error: 'Erro ao criar Pedido' });
+      }
+
+      res.status(201).json(result.rows[0]);
+    });
+  });
+};
+
+app.get('/pedido', getAllPedidos);
+app.post('/pedido', createPedido);
+
+app.listen(port, () => {
+  console.log(`Servidor ouvindo na porta ${port}`);
+});
