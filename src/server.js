@@ -337,6 +337,8 @@ const deletePizza = (req, res) => {
   });
 };
 
+
+
 // Rotas das Pizzas
 app.get('/pizzas', getAllPizzas);
 app.get('/pizzas/:id', getPizzaById);
@@ -347,6 +349,8 @@ app.delete('/pizzas/:id', deletePizza);
 // Rotas dos Pedidos
 app.get('/pedido', getAllPedidos);
 app.post('/pedido', createPedido);
+
+// Rotas dos Pedidos
 
 
 app.listen(port, () => {
