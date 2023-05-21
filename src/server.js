@@ -211,8 +211,140 @@ const createPedido = (req, res) => {
   });
 };
 
-// Criar uma nova pizza 
+// Obter todas as Pizzas
+const getAllPizzas = (req, res) => {
+  pool.connect((err, client, done) => {
+    if (err) {
+      console.error('Erro ao obter conexão do pool', err);
+      return res.status(500).json({ error: 'Erro ao obter Pizzas' });
+    }
 
+    client.query('SELECT * FROM pizzas;', (err, result) => {
+      done(); // Libera a conexão
+
+      if (err) {
+        console.error('Erro ao executar a consulta', err);
+        return res.status(500).json({ error: 'Erro ao obter Pizzas' });
+      }
+
+      res.status(200).json(result.rows);
+    });
+  });
+};
+
+// Obter uma Pizza por ID
+const getPizzaById = (req, res) => {
+  const pizzaId = req.params.id;
+
+  pool.connect((err, client, done) => {
+    if (err) {
+      console.error('Erro ao obter conexão do pool', err);
+      return res.status(500).json({ error: 'Erro ao obter a Pizza' });
+    }
+
+    client.query('SELECT * FROM pizzas WHERE pizza_id = $1;', [pizzaId], (err, result) => {
+      done(); // Libera a conexão
+
+      if (err) {
+        console.error('Erro ao executar a consulta', err);
+        return res.status(500).json({ error: 'Erro ao obter a Pizza' });
+      }
+
+      if (result.rows.length === 0) {
+        return res.status(404).json({ error: 'Pizza não encontrada' });
+      }
+
+      res.status(200).json(result.rows[0]);
+    });
+  });
+};
+
+// Criar uma nova Pizza
+const createPizza = (req, res) => {
+  const { pizza_id, pizza_nome, pizza_valor, pizza_imagem, pizza_descricao } = req.body;
+
+  pool.connect((err, client, done) => {
+    if (err) {
+      console.error('Erro ao obter conexão do pool', err);
+      return res.status(500).json({ error: 'Erro ao criar Pizza' });
+    }
+
+    client.query('INSERT INTO pizzas (pizza_id, pizza_nome, pizza_valor, pizza_imagem, pizza_descricao) VALUES ($1, $2, $3, $4, $5) RETURNING *', [pizza_id, pizza_nome, pizza_valor, pizza_imagem, pizza_descricao], (err, result) => {
+      done(); // Libera a conexão
+
+      if (err) {
+        console.error('Erro ao executar a consulta', err);
+        return res.status(500).json({ error: 'Erro ao criar Pizza' });
+      }
+
+      res.status(201).json(result.rows[0]);
+    });
+  });
+};
+
+// Atualizar uma Pizza existente
+const updatePizza = (req, res) => {
+  const pizzaId = req.params.id;
+  const { pizza_nome, pizza_valor, pizza_imagem, pizza_descricao } = req.body;
+
+  pool.connect((err, client, done) => {
+    if (err) {
+      console.error('Erro ao obter conexão do pool', err);
+      return res.status(500).json({ error: 'Erro ao atualizar a Pizza' });
+    }
+
+    client.query('UPDATE pizzas SET pizza_nome = $1, pizza_valor = $2, pizza_imagem = $3, pizza_descricao = $4 WHERE pizza_id = $5 RETURNING *', [pizza_nome, pizza_valor, pizza_imagem, pizza_descricao, pizzaId], (err, result) => {
+      done(); // Libera a conexão
+
+      if (err) {
+        console.error('Erro ao executar a consulta', err);
+        return res.status(500).json({ error: 'Erro ao atualizar a Pizza' });
+      }
+
+      if (result.rows.length === 0) {
+        return res.status(404).json({ error: 'Pizza não encontrada' });
+      }
+
+      res.status(200).json(result.rows[0]);
+    });
+  });
+};
+
+// Excluir uma Pizza
+const deletePizza = (req, res) => {
+  const pizzaId = req.params.id;
+
+  pool.connect((err, client, done) => {
+    if (err) {
+      console.error('Erro ao obter conexão do pool', err);
+      return res.status(500).json({ error: 'Erro ao excluir a Pizza' });
+    }
+
+    client.query('DELETE FROM pizzas WHERE pizza_id = $1 RETURNING *', [pizzaId], (err, result) => {
+      done(); // Libera a conexão
+
+      if (err) {
+        console.error('Erro ao executar a consulta', err);
+        return res.status(500).json({ error: 'Erro ao excluir a Pizza' });
+      }
+
+      if (result.rows.length === 0) {
+        return res.status(404).json({ error: 'Pizza não encontrada' });
+      }
+
+      res.status(200).json({ message: 'Pizza excluída com sucesso' });
+    });
+  });
+};
+
+// Rotas das Pizzas
+app.get('/pizzas', getAllPizzas);
+app.get('/pizzas/:id', getPizzaById);
+app.post('/pizzas', createPizza);
+app.put('/pizzas/:id', updatePizza);
+app.delete('/pizzas/:id', deletePizza);
+
+// Rotas dos Pedidos
 app.get('/pedido', getAllPedidos);
 app.post('/pedido', createPedido);
 
