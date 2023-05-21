@@ -167,20 +167,21 @@ const port = 3000;
 
 app.use(bodyParser.json());
 
-// Obter todos os Pedidos
+// Obter todos os pedidos
+// Obter todos os pedidos
 const getAllPedidos = (req, res) => {
   pool.connect((err, client, done) => {
     if (err) {
       console.error('Erro ao obter conexão do pool', err);
-      return res.status(500).json({ error: 'Erro ao obter Pedidos' });
+      return res.status(500).json({ error: 'Erro ao obter pedidos' });
     }
 
-    client.query('SELECT * FROM users;', (err, result) => {
+    client.query('SELECT * FROM pedidos;', (err, result) => {
       done(); // Libera a conexão
 
       if (err) {
         console.error('Erro ao executar a consulta', err);
-        return res.status(500).json({ error: 'Erro ao obter Pedidos' });
+        return res.status(500).json({ error: 'Erro ao obter pedidos' });
       }
 
       res.status(200).json(result.rows);
@@ -188,25 +189,107 @@ const getAllPedidos = (req, res) => {
   });
 };
 
-// Criar um novo Pedido
-const createPedido = (req, res) => {
-  const { user_id, user_name, user_contato, user_endereco } = req.body;
+// Obter um pedido por ID
+const getPedidoById = (req, res) => {
+  const pedidoId = req.params.id;
 
   pool.connect((err, client, done) => {
     if (err) {
       console.error('Erro ao obter conexão do pool', err);
-      return res.status(500).json({ error: 'Erro ao criar Pedido' });
+      return res.status(500).json({ error: 'Erro ao obter o pedido' });
     }
 
-    client.query('INSERT INTO users (user_id, user_name, user_contato, user_endereco) VALUES ($1, $2, $3, $4) RETURNING *', [user_id, user_name, user_contato, user_endereco], (err, result) => {
+    client.query('SELECT * FROM pedidos WHERE pedido_id = $1;', [pedidoId], (err, result) => {
       done(); // Libera a conexão
 
       if (err) {
         console.error('Erro ao executar a consulta', err);
-        return res.status(500).json({ error: 'Erro ao criar Pedido' });
+        return res.status(500).json({ error: 'Erro ao obter o pedido' });
+      }
+
+      if (result.rows.length === 0) {
+        return res.status(404).json({ error: 'Pedido não encontrado' });
+      }
+
+      res.status(200).json(result.rows[0]);
+    });
+  });
+};
+
+// Criar um novo pedido
+const createPedido = (req, res) => {
+  const { pedido_endereco, pedido_desc, user_id } = req.body;
+
+  pool.connect((err, client, done) => {
+    if (err) {
+      console.error('Erro ao obter conexão do pool', err);
+      return res.status(500).json({ error: 'Erro ao criar pedido' });
+    }
+
+    client.query('INSERT INTO pedidos (pedido_endereco, pedido_desc, user_id) VALUES ($1, $2, $3) RETURNING *', [pedido_endereco, pedido_desc, user_id], (err, result) => {
+      done(); // Libera a conexão
+
+      if (err) {
+        console.error('Erro ao executar a consulta', err);
+        return res.status(500).json({ error: 'Erro ao criar pedido' });
       }
 
       res.status(201).json(result.rows[0]);
+    });
+  });
+};
+
+// Atualizar um pedido existente
+const updatePedido = (req, res) => {
+  const pedidoId = req.params.id;
+  const { pedido_endereco, pedido_desc } = req.body;
+
+  pool.connect((err, client, done) => {
+    if (err) {
+      console.error('Erro ao obter conexão do pool', err);
+      return res.status(500).json({ error: 'Erro ao atualizar o pedido' });
+    }
+
+    client.query('UPDATE pedidos SET pedido_endereco = $1, pedido_desc = $2 WHERE pedido_id = $3 RETURNING *', [pedido_endereco, pedido_desc, pedidoId], (err, result) => {
+      done(); // Libera a conexão
+
+      if (err) {
+        console.error('Erro ao executar a consulta', err);
+        return res.status(500).json({ error: 'Erro ao atualizar o pedido' });
+      }
+
+      if (result.rows.length === 0) {
+        return res.status(404).json({ error: 'Pedido não encontrado' });
+      }
+
+      res.status(200).json(result.rows[0]);
+    });
+  });
+};
+
+// Excluir um pedido
+const deletePedido = (req, res) => {
+  const pedidoId = req.params.id;
+
+  pool.connect((err, client, done) => {
+    if (err) {
+      console.error('Erro ao obter conexão do pool', err);
+      return res.status(500).json({ error: 'Erro ao excluir o pedido' });
+    }
+
+    client.query('DELETE FROM pedidos WHERE pedido_id = $1 RETURNING *', [pedidoId], (err, result) => {
+      done(); // Libera a conexão
+
+      if (err) {
+        console.error('Erro ao executar a consulta', err);
+        return res.status(500).json({ error: 'Erro ao excluir o pedido' });
+      }
+
+      if (result.rows.length === 0) {
+        return res.status(404).json({ error: 'Pedido não encontrado' });
+      }
+
+      res.status(200).json({ message: 'Pedido excluído com sucesso' });
     });
   });
 };
@@ -452,8 +535,11 @@ app.put('/pizzas/:id', updatePizza);
 app.delete('/pizzas/:id', deletePizza);
 
 // Rotas dos Pedidos
-app.get('/pedido', getAllPedidos);
-app.post('/pedido', createPedido);
+app.post('/pedidos', createPedido);
+app.get('/pedidos', getAllPedidos);
+app.get('/pedidos/:id', getPedidoById);
+app.put('/pedidos/:id', updatePedido);
+app.delete('/pedidos/:id', deletePedido);
 
 // Rotas dos usuários
 app.post('/usuarios', createUsuario);
