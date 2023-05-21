@@ -261,7 +261,7 @@ const getPizzaById = (req, res) => {
 
 // Criar uma nova Pizza
 const createPizza = (req, res) => {
-  const { pizza_id, pizza_nome, pizza_valor, pizza_imagem, pizza_descricao } = req.body;
+  const { pizza_id, pizza_nome, pizza_valor, pizza_descricao } = req.body;
 
   pool.connect((err, client, done) => {
     if (err) {
@@ -269,7 +269,7 @@ const createPizza = (req, res) => {
       return res.status(500).json({ error: 'Erro ao criar Pizza' });
     }
 
-    client.query('INSERT INTO pizzas (pizza_id, pizza_nome, pizza_valor, pizza_imagem, pizza_descricao) VALUES ($1, $2, $3, $4, $5) RETURNING *', [pizza_id, pizza_nome, pizza_valor, pizza_imagem, pizza_descricao], (err, result) => {
+    client.query('INSERT INTO pizzas (pizza_id, pizza_nome, pizza_valor, pizza_descricao) VALUES ($1, $2, $3, $4) RETURNING *', [pizza_id, pizza_nome, pizza_valor, pizza_descricao], (err, result) => {
       done(); // Libera a conexão
 
       if (err) {
@@ -285,7 +285,7 @@ const createPizza = (req, res) => {
 // Atualizar uma Pizza existente
 const updatePizza = (req, res) => {
   const pizzaId = req.params.id;
-  const { pizza_nome, pizza_valor, pizza_imagem, pizza_descricao } = req.body;
+  const { pizza_nome, pizza_valor, pizza_descricao } = req.body;
 
   pool.connect((err, client, done) => {
     if (err) {
@@ -293,7 +293,7 @@ const updatePizza = (req, res) => {
       return res.status(500).json({ error: 'Erro ao atualizar a Pizza' });
     }
 
-    client.query('UPDATE pizzas SET pizza_nome = $1, pizza_valor = $2, pizza_imagem = $3, pizza_descricao = $4 WHERE pizza_id = $5 RETURNING *', [pizza_nome, pizza_valor, pizza_imagem, pizza_descricao, pizzaId], (err, result) => {
+    client.query('UPDATE pizzas SET pizza_nome = $1, pizza_valor = $2, pizza_descricao = $3 WHERE pizza_id = $4 RETURNING *', [pizza_nome, pizza_valor, pizza_descricao, pizzaId], (err, result) => {
       done(); // Libera a conexão
 
       if (err) {
