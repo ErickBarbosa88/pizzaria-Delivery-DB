@@ -211,8 +211,11 @@ const createPedido = (req, res) => {
   });
 };
 
+// Criar uma nova pizza 
+
 app.get('/pedido', getAllPedidos);
 app.post('/pedido', createPedido);
+
 
 app.listen(port, () => {
   console.log(`Servidor ouvindo na porta ${port}`);
