@@ -337,7 +337,112 @@ const deletePizza = (req, res) => {
   });
 };
 
+// Criar um novo usuário
+const createUsuario = (req, res) => {
+  const { nome, sobrenome, email, senha, telefone } = req.body;
 
+  pool.connect((err, client, done) => {
+    if (err) {
+      console.error('Erro ao obter conexão do pool', err);
+      return res.status(500).json({ error: 'Erro ao criar usuário' });
+    }
+
+    client.query(
+      'INSERT INTO usuarios (nome, sobrenome, email, senha, telefone) VALUES ($1, $2, $3, $4, $5) RETURNING *',
+      [nome, sobrenome, email, senha, telefone],
+      (err, result) => {
+        done(); // Libera a conexão
+
+        if (err) {
+          console.error('Erro ao executar a consulta', err);
+          return res.status(500).json({ error: 'Erro ao criar usuário' });
+        }
+
+        res.status(201).json(result.rows[0]);
+      }
+    );
+  });
+};
+
+// Obter todos os usuários
+const getAllUsuarios = (req, res) => {
+  pool.query('SELECT * FROM usuarios ORDER BY usuario_id ASC', (err, result) => {
+    if (err) {
+      console.error('Erro ao executar a consulta', err);
+      return res.status(500).json({ error: 'Erro ao obter usuários' });
+    }
+
+    res.status(200).json(result.rows);
+  });
+};
+
+// Obter um usuário por ID
+const getUsuarioById = (req, res) => {
+  const usuarioId = req.params.id;
+
+  pool.query('SELECT * FROM usuarios WHERE usuario_id = $1', [usuarioId], (err, result) => {
+    if (err) {
+      console.error('Erro ao executar a consulta', err);
+      return res.status(500).json({ error: 'Erro ao obter usuário' });
+    }
+
+    if (result.rows.length === 0) {
+      return res.status(404).json({ error: 'Usuário não encontrado' });
+    }
+
+    res.status(200).json(result.rows[0]);
+  });
+};
+
+// Atualizar um usuário existente
+const updateUsuario = (req, res) => {
+  const usuarioId = req.params.id;
+  const { nome, sobrenome, email, senha, telefone } = req.body;
+
+  pool.connect((err, client, done) => {
+    if (err) {
+      console.error('Erro ao obter conexão do pool', err);
+      return res.status(500).json({ error: 'Erro ao atualizar usuário' });
+    }
+
+    client.query(
+      'UPDATE usuarios SET nome = $1, sobrenome = $2, email = $3, senha = $4, telefone = $5 WHERE usuario_id = $6 RETURNING *',
+      [nome, sobrenome, email, senha, telefone, usuarioId],
+      (err, result) => {
+        done(); // Libera a conexão
+
+        if (err) {
+          console.error('Erro ao executar a consulta', err);
+          return res.status(500).json({ error: 'Erro ao atualizar usuário' });
+        }
+
+        if (result.rows.length === 0) {
+          return res.status(404).json({ error: 'Usuário não encontrado' });
+        }
+
+        res.status(200).json(result.rows[0]);
+      }
+    );
+  });
+};
+
+// Excluir um usuário
+const deleteUsuario = (req, res) => {
+  const usuarioId = req.params.id;
+
+  pool.query('DELETE FROM usuarios WHERE usuario_id = $1 RETURNING *', [usuarioId], (err, result) => {
+    if (err) {
+      console.error('Erro ao executar a consulta', err);
+      return res.status(500).json({ error: 'Erro ao excluir usuário' });
+    }
+
+    if (result.rows.length === 0) {
+      return res.status(404).json({ error: 'Usuário não encontrado' });
+    }
+
+    res.status(200).json({ message: 'Usuário excluído com sucesso' });
+  });
+};
 
 // Rotas das Pizzas
 app.get('/pizzas', getAllPizzas);
@@ -350,8 +455,12 @@ app.delete('/pizzas/:id', deletePizza);
 app.get('/pedido', getAllPedidos);
 app.post('/pedido', createPedido);
 
-// Rotas dos Pedidos
-
+// Rotas dos usuários
+app.post('/usuarios', createUsuario);
+app.get('/usuarios', getAllUsuarios);
+app.get('/usuarios/:id', getUsuarioById);
+app.put('/usuarios/:id', updateUsuario);
+app.delete('/usuarios/:id', deleteUsuario);
 
 app.listen(port, () => {
   console.log(`Servidor ouvindo na porta ${port}`);
