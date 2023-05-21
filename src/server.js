@@ -266,21 +266,26 @@ const createPizza = (req, res) => {
   pool.connect((err, client, done) => {
     if (err) {
       console.error('Erro ao obter conexão do pool', err);
-      return res.status(500).json({ error: 'Erro ao criar Pizza' });
+      return res.status(500).json({ error: 'Erro ao criar Pizza conexão' });
     }
 
-    client.query('INSERT INTO pizzas (pizza_id, pizza_nome, pizza_valor, pizza_descricao) VALUES ($1, $2, $3, $4) RETURNING *', [pizza_id, pizza_nome, pizza_valor, pizza_descricao], (err, result) => {
-      done(); // Libera a conexão
+    client.query(
+      'INSERT INTO pizzas (pizza_id, pizza_nome, pizza_valor, pizza_descricao) VALUES ($1, $2, $3, $4) RETURNING *',
+      [pizza_id, pizza_nome, pizza_valor, pizza_descricao],
+      (err, result) => {
+        done(); // Libera a conexão
 
-      if (err) {
-        console.error('Erro ao executar a consulta', err);
-        return res.status(500).json({ error: 'Erro ao criar Pizza' });
+        if (err) {
+          console.error('Erro ao executar a consulta', err);
+          return res.status(500).json({ error: 'Erro ao criar Pizza' });
+        }
+
+        res.status(201).json(result.rows[0]);
       }
-
-      res.status(201).json(result.rows[0]);
-    });
+    );
   });
 };
+
 
 // Atualizar uma Pizza existente
 const updatePizza = (req, res) => {
