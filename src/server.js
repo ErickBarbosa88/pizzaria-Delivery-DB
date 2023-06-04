@@ -262,7 +262,7 @@ const deletePizza = (req, res) => {
 
 // Criar um novo usuário
 const createUsuario = (req, res) => {
-  const { nome, sobrenome, email, senha, telefone } = req.body;
+  const { nome, sobrenome, email, senha, telefone, endereco } = req.body;
 
   pool.connect((err, client, done) => {
     if (err) {
@@ -271,8 +271,8 @@ const createUsuario = (req, res) => {
     }
 
     client.query(
-      'INSERT INTO usuarios (nome, sobrenome, email, senha, telefone) VALUES ($1, $2, $3, $4, $5) RETURNING *',
-      [nome, sobrenome, email, senha, telefone],
+      'INSERT INTO usuarios (nome, sobrenome, email, senha, telefone, endereco) VALUES ($1, $2, $3, $4, $5, $6) RETURNING *',
+      [nome, sobrenome, email, senha, telefone, endereco],
       (err, result) => {
         done(); // Libera a conexão
 
